@@ -21,7 +21,7 @@ public class SecurityConfig {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
-    @Bean
+    @Bean       // 사용하면 [warn] You are asking Spring Security to ignore
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web -> web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
@@ -37,7 +37,11 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 );
         http
-                .formLogin();
+                .formLogin()
+                .loginPage("/login")                // login 페이지 url
+                .loginProcessingUrl("/login_proc")  // client가 post로 로그인 요청하는 url
+                .defaultSuccessUrl("/")             // login 성공시 redirect url
+                .permitAll();                       // 로그인 페이지에 대한 권한 설정
 
         return http.build();
     }
