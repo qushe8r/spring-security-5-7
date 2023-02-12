@@ -1,9 +1,11 @@
 package me.qushe8r.studyspringsecurity5_7.security.config;
 
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
@@ -29,13 +31,13 @@ public class SecurityConfig {
         UserDetails manager = User.builder()  // manager
                 .username("manager")
                 .password(password)
-                .roles("MANAGER")
+                .roles("MANAGER", "USER")
                 .build();
 
         UserDetails admin = User.builder()   // admin
                 .username("admin")
                 .password(password)
-                .roles("ADMIN")
+                .roles("ADMIN", "MANAGER", "USER")
                 .build();
 
         return new InMemoryUserDetailsManager(user, manager, admin);
@@ -47,12 +49,17 @@ public class SecurityConfig {
     }
 
     @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return web -> web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorization -> authorization
-                        .antMatchers("/").permitAll()
+                        .antMatchers("/", "/user").permitAll()
                         .antMatchers("/mypage").hasRole("USER")
-                        .antMatchers("/message").hasRole("MANAGER")
+                        .antMatchers("/messages").hasRole("MANAGER")
                         .antMatchers("/config").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 );
