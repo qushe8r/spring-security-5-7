@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 public class SecurityConfig {
     private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource;
     private final AuthenticationSuccessHandler authenticationSuccessHandler;
+    private final AuthenticationFailureHandler authenticationFailureHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -36,7 +38,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorization -> authorization
-                        .antMatchers("/", "/users").permitAll()
+                        .antMatchers("/", "/users", "/login/**", "/login/*").permitAll()
                         .antMatchers("/mypage").hasRole("USER")
                         .antMatchers("/messages").hasRole("MANAGER")
                         .antMatchers("/config").hasRole("ADMIN")
@@ -49,6 +51,7 @@ public class SecurityConfig {
                 .authenticationDetailsSource(authenticationDetailsSource)
                 .defaultSuccessUrl("/")             // login 성공시 redirect url
                 .successHandler(authenticationSuccessHandler)
+                .failureHandler(authenticationFailureHandler)
                 .permitAll();                       // 로그인 페이지에 대한 권한 설정
 
         return http.build();
