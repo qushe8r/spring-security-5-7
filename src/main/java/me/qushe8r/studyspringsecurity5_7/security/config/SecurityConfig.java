@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -19,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource;
+    private final AuthenticationSuccessHandler authenticationSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -46,6 +48,7 @@ public class SecurityConfig {
                 .loginProcessingUrl("/login_proc")  // client가 post로 로그인 요청하는 url
                 .authenticationDetailsSource(authenticationDetailsSource)
                 .defaultSuccessUrl("/")             // login 성공시 redirect url
+                .successHandler(authenticationSuccessHandler)
                 .permitAll();                       // 로그인 페이지에 대한 권한 설정
 
         return http.build();
