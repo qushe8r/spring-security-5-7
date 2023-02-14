@@ -1,9 +1,11 @@
 package me.qushe8r.studyspringsecurity5_7.security.provider;
 
 import lombok.RequiredArgsConstructor;
+import me.qushe8r.studyspringsecurity5_7.security.common.FormAuthenticationDetails;
 import me.qushe8r.studyspringsecurity5_7.security.service.AccountContext;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -26,6 +28,13 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         if (!passwordEncoder.matches(password, accountContext.getPassword())) {
             throw new BadCredentialsException("BadCredentialsException");
+        }
+
+        FormAuthenticationDetails details = (FormAuthenticationDetails) authentication.getDetails();
+        String secretKey = details.getSecretKey();
+
+        if (!"secret".equals(secretKey)) {
+            throw new InsufficientAuthenticationException("InsufficientAuthenticationException");
         }
 
         return UsernamePasswordAuthenticationToken
