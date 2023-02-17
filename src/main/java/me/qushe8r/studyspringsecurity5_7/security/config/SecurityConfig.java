@@ -2,15 +2,18 @@ package me.qushe8r.studyspringsecurity5_7.security.config;
 
 import lombok.RequiredArgsConstructor;
 import me.qushe8r.studyspringsecurity5_7.security.filter.AjaxLoginProcessingFilter;
+import me.qushe8r.studyspringsecurity5_7.security.provider.AjaxAuthenticationProvider;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -22,13 +25,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import javax.servlet.http.HttpServletRequest;
 
 @Configuration
-@EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource;
     private final AuthenticationSuccessHandler authenticationSuccessHandler;
     private final AuthenticationFailureHandler authenticationFailureHandler;
     private final AccessDeniedHandler accessDeniedHandler;
+    private final UserDetailsService userDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -41,10 +44,26 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Order(0)
+    public SecurityFilterChain ajaxFilterChain(HttpSecurity http) throws Exception {
         AuthenticationManager authenticationManager = authenticationManager(http.getSharedObject(AuthenticationConfiguration.class));
         AjaxLoginProcessingFilter ajaxLoginProcessingFilter = ajaxLoginProcessingFilter(authenticationManager);
 
+        http
+                .antMatcher("/api/**")
+                .authorizeRequests(authorize -> authorize
+                        .anyRequest().authenticated()
+                );
+        http
+                .addFilterBefore(ajaxLoginProcessingFilter, UsernamePasswordAuthenticationFilter.class);
+        http
+                .csrf().disable();
+
+        return http.build();
+    }
+    @Bean
+    @Order(1)
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorization -> authorization
                         .antMatchers("/", "/users", "/login/**", "/login/*").permitAll()
@@ -67,8 +86,6 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler);
         http
                 .csrf().disable();
-        http
-                .addFilterBefore(ajaxLoginProcessingFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -79,9 +96,15 @@ public class SecurityConfig {
         ajaxLoginProcessingFilter.setAuthenticationManager(authenticationManager);
         return ajaxLoginProcessingFilter;
     }
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        ProviderManager authenticationManager = (ProviderManager) authenticationConfiguration.getAuthenticationManager();
+        authenticationManager.getProviders().add(ajaxAuthenticationProvider());
+        return authenticationManager;
+    }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration auth) throws Exception {
-        return auth.getAuthenticationManager();
+    public AjaxAuthenticationProvider ajaxAuthenticationProvider() {
+        return new AjaxAuthenticationProvider(userDetailsService, passwordEncoder());
     }
 }
