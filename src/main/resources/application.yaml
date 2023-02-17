@@ -5,7 +5,7 @@ spring:
     username: ${POSTGRESQL_USERNAME}
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: create
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
