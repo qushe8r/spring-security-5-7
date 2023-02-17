@@ -1,7 +1,9 @@
 package me.qushe8r.studyspringsecurity5_7.security.config;
 
 import lombok.RequiredArgsConstructor;
+import me.qushe8r.studyspringsecurity5_7.security.common.AjaxLoginAuthenticationEntryPoint;
 import me.qushe8r.studyspringsecurity5_7.security.filter.AjaxLoginProcessingFilter;
+import me.qushe8r.studyspringsecurity5_7.security.handler.AjaxAccessDeniedHandler;
 import me.qushe8r.studyspringsecurity5_7.security.handler.AjaxAuthenticationFailureHandler;
 import me.qushe8r.studyspringsecurity5_7.security.handler.AjaxAuthenticationSuccessHandler;
 import me.qushe8r.studyspringsecurity5_7.security.provider.AjaxAuthenticationProvider;
@@ -56,15 +58,21 @@ public class SecurityConfig {
         http
                 .antMatcher("/api/**")
                 .authorizeRequests(authorize -> authorize
+                        .antMatchers("/api/messages").hasRole("MANAGER")
                         .anyRequest().authenticated()
                 );
         http
                 .addFilterBefore(ajaxLoginProcessingFilter, UsernamePasswordAuthenticationFilter.class);
         http
+                .exceptionHandling()
+                .authenticationEntryPoint(new AjaxLoginAuthenticationEntryPoint())
+                .accessDeniedHandler(new AjaxAccessDeniedHandler());
+        http
                 .csrf().disable();
 
         return http.build();
     }
+
     @Bean
     @Order(1)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -102,6 +110,7 @@ public class SecurityConfig {
         ajaxLoginProcessingFilter.setAuthenticationFailureHandler(ajaxAuthenticationFailureHandler());
         return ajaxLoginProcessingFilter;
     }
+
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         ProviderManager authenticationManager = (ProviderManager) authenticationConfiguration.getAuthenticationManager();
