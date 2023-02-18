@@ -65,8 +65,8 @@ public class SecurityConfig {
                 .exceptionHandling()
                 .authenticationEntryPoint(new AjaxLoginAuthenticationEntryPoint())
                 .accessDeniedHandler(new AjaxAccessDeniedHandler());
-        http
-                .csrf().disable();
+//        http
+//                .csrf().disable();
         http
                 .apply(AjaxDSL())
                 .successHandlerAjax(ajaxAuthenticationSuccessHandler())
@@ -100,8 +100,8 @@ public class SecurityConfig {
         http
                 .exceptionHandling()
                 .accessDeniedHandler(accessDeniedHandler);
-        http
-                .csrf().disable();
+//        http
+//                .csrf().disable();
 
         return http.build();
     }
