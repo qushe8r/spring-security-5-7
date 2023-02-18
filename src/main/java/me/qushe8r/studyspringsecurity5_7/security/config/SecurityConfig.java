@@ -25,9 +25,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.servlet.http.HttpServletRequest;
+
+import static me.qushe8r.studyspringsecurity5_7.security.config.AjaxLoginConfigurer.AjaxDSL;
 
 @Configuration
 @EnableWebSecurity
@@ -53,7 +54,6 @@ public class SecurityConfig {
     @Order(0)
     public SecurityFilterChain ajaxFilterChain(HttpSecurity http) throws Exception {
         AuthenticationManager authenticationManager = authenticationManager(http.getSharedObject(AuthenticationConfiguration.class));
-        AjaxLoginProcessingFilter ajaxLoginProcessingFilter = ajaxLoginProcessingFilter(authenticationManager);
 
         http
                 .antMatcher("/api/**")
@@ -62,13 +62,17 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 );
         http
-                .addFilterBefore(ajaxLoginProcessingFilter, UsernamePasswordAuthenticationFilter.class);
-        http
                 .exceptionHandling()
                 .authenticationEntryPoint(new AjaxLoginAuthenticationEntryPoint())
                 .accessDeniedHandler(new AjaxAccessDeniedHandler());
         http
                 .csrf().disable();
+        http
+                .apply(AjaxDSL())
+                .successHandlerAjax(ajaxAuthenticationSuccessHandler())
+                .failureHandlerAjax(ajaxAuthenticationFailureHandler())
+                .setAuthenticationManager(authenticationManager)
+                .loginProcessingUrl("/api/login");
 
         return http.build();
     }
